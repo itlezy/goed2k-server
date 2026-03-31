@@ -1,0 +1,56 @@
+{
+  "files": [
+    {
+      "hash": "31D6CFE0D16AE931B73C59D7E0C089C0",
+      "name": "ubuntu-24.04-desktop-amd64.iso",
+      "size": 6144000000,
+      "file_type": "Iso",
+      "extension": "iso",
+      "sources": 12,
+      "complete_sources": 10,
+      "endpoints": [
+        {
+          "host": "127.0.0.1",
+          "port": 4662
+        },
+        {
+          "host": "127.0.0.2",
+          "port": 4662
+        }
+      ]
+    },
+    {
+      "hash": "31D6CFE0D14CE931B73C59D7E0C04BC0",
+      "name": "archlinux-2026.03.01-x86_64.iso",
+      "size": 1024000000,
+      "file_type": "Iso",
+      "extension": "iso",
+      "sources": 6,
+      "complete_sources": 6,
+      "endpoints": [
+        {
+          "host": "127.0.0.3",
+          "port": 4662
+        }
+      ]
+    },
+    {
+      "hash": "31D6CFE0D10EE931B73C59D7E0C06FC0",
+      "name": "demo-track.flac",
+      "size": 52428800,
+      "file_type": "Audio",
+      "extension": "flac",
+      "media_codec": "FLAC",
+      "media_length": 245,
+      "media_bitrate": 1400,
+      "sources": 3,
+      "complete_sources": 2,
+      "endpoints": [
+        {
+          "host": "127.0.0.4",
+          "port": 4662
+        }
+      ]
+    }
+  ]
+}

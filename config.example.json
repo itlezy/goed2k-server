@@ -1,0 +1,15 @@
+{
+  "listen_address": ":4661",
+  "admin_listen_address": ":8080",
+  "admin_token": "change-me",
+  "server_name": "goed2k-server",
+  "server_description": "Minimal eD2k/eMule compatible server",
+  "message": "Welcome to goed2k-server",
+  "storage_backend": "json",
+  "catalog_path": "testdata/catalog.json",
+  "database_dsn": "",
+  "database_table": "shared_files",
+  "search_batch_size": 2,
+  "tcp_flags": 0,
+  "aux_port": 0
+}
