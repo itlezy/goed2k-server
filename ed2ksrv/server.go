@@ -615,13 +615,23 @@ func (s *Server) clientCount() int {
 
 func (s *Server) allocateClientID(addr *net.TCPAddr) int32 {
 	if clientID := clientIDFromRemote(addr); clientID != 0 {
-		return clientID
+		s.mu.RLock()
+		_, inUse := s.clients[clientID]
+		s.mu.RUnlock()
+		if !inUse {
+			return clientID
+		}
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	clientID := s.nextID
-	s.nextID++
-	return clientID
+	for {
+		if _, exists := s.clients[clientID]; !exists {
+			s.nextID = clientID + 1
+			return clientID
+		}
+		clientID++
+	}
 }
 
 func (s *Server) currentFilesCount() int {
