@@ -10,12 +10,21 @@ import (
 )
 
 const (
-	opLoginRequest  byte = 0x01
-	opGetServerList byte = 0x14
-	opSearchRequest byte = 0x16
-	opGetSources    byte = 0x19
-	opCallbackReq   byte = 0x1C
-	opSearchMore    byte = 0x21
+	opLoginRequest   byte = 0x01
+	opGetServerList  byte = 0x14
+	opSearchRequest  byte = 0x16
+	opGetSources     byte = 0x19
+	opGetSourcesObfu byte = 0x23
+	opCallbackReq    byte = 0x1C
+	opSearchMore     byte = 0x21
+
+	opFoundSourcesObfu byte = 0x44
+
+	sourceObfuscationUserHashPresent byte = 0x80
+
+	serverCapabilitySupportCrypt uint32 = 0x0200
+	serverCapabilityRequestCrypt uint32 = 0x0400
+	serverCapabilityRequireCrypt uint32 = 0x0800
 
 	searchTypeBool   byte = 0x00
 	searchTypeString byte = 0x01

@@ -107,6 +107,7 @@ type clientSession struct {
 	mu      sync.Mutex
 
 	clientHash       protocol.Hash
+	connectOptions   byte
 	loginPoint       protocol.Endpoint
 	assignedID       int32
 	clientName       string
@@ -424,7 +425,13 @@ func (s *Server) dispatch(client *clientSession, packet byte, body []byte) error
 		if err := req.Get(bytes.NewReader(body)); err != nil {
 			return err
 		}
-		return s.handleGetSources(client, req)
+		return s.handleGetSources(client, req, false)
+	case opGetSourcesObfu:
+		var req serverproto.GetFileSources
+		if err := req.Get(bytes.NewReader(body)); err != nil {
+			return err
+		}
+		return s.handleGetSources(client, req, true)
 	case opCallbackReq:
 		var req serverproto.CallbackRequest
 		if err := req.Get(bytes.NewReader(body)); err != nil {
@@ -442,6 +449,7 @@ func (s *Server) dispatch(client *clientSession, packet byte, body []byte) error
 func (s *Server) handleLogin(client *clientSession, req serverproto.LoginRequest) error {
 	client.mu.Lock()
 	client.clientHash = req.Hash
+	client.connectOptions = extractClientConnectOptions(req.Properties)
 	client.loginPoint = req.Point
 	client.clientName = extractClientName(req.Properties)
 	client.assignedID = s.allocateClientID(client.remote)
@@ -539,8 +547,8 @@ func (s *Server) handleSearchMore(client *clientSession) error {
 	return client.send("server.SearchResult", packet)
 }
 
-func (s *Server) handleGetSources(client *clientSession, req serverproto.GetFileSources) error {
-	sources := s.sourcesAll(req.Hash)
+func (s *Server) handleGetSources(client *clientSession, req serverproto.GetFileSources, obfuscated bool) error {
+	sources := s.sourcesAll(req.Hash, obfuscated)
 	if len(sources) > 255 {
 		sources = sources[:255]
 	}
@@ -548,7 +556,14 @@ func (s *Server) handleGetSources(client *clientSession, req serverproto.GetFile
 	s.bumpCounter(func(stats *serverCounters) {
 		stats.SourceRequests++
 	})
-	return client.send("server.FoundFileSources", &serverproto.FoundFileSources{Hash: req.Hash, Sources: sources})
+	if !obfuscated {
+		endpoints := make([]protocol.Endpoint, 0, len(sources))
+		for _, source := range sources {
+			endpoints = append(endpoints, protocol.NewEndpoint(source.ClientID, source.Port))
+		}
+		return client.send("server.FoundFileSources", &serverproto.FoundFileSources{Hash: req.Hash, Sources: endpoints})
+	}
+	return client.sendFoundSourcesObfuscated(req.Hash, sources)
 }
 
 func (s *Server) handleCallback(client *clientSession, req serverproto.CallbackRequest) error {
@@ -654,17 +669,41 @@ func (s *Server) searchAll(query SearchQuery) []serverproto.SharedFileEntry {
 	return results
 }
 
-func (s *Server) sourcesAll(hash protocol.Hash) []protocol.Endpoint {
-	sources := s.catalog.Sources(hash)
+type foundSourceEntry struct {
+	ClientID           int32
+	Port               int
+	ObfuscationOptions byte
+	UserHash           *protocol.Hash
+}
+
+func (s *Server) sourcesAll(hash protocol.Hash, obfuscated bool) []foundSourceEntry {
+	sources := make([]foundSourceEntry, 0)
+	if record, ok := s.catalog.Get(hash); ok {
+		for _, source := range record.Endpoints {
+			endpoint, err := protocol.EndpointFromString(source.Host, source.Port)
+			if err != nil {
+				continue
+			}
+			sources = append(sources, foundSourceEntry{
+				ClientID: endpoint.IP(),
+				Port:     endpoint.Port(),
+			})
+		}
+	}
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	if shared, ok := s.dynamicFiles[hash.String()]; ok {
-		record := shared.materialize()
-		for _, source := range record.Endpoints {
-			endpoint, err := protocol.EndpointFromString(source.Host, source.Port)
-			if err == nil {
-				sources = append(sources, endpoint)
+		for clientID, source := range shared.byClient {
+			entry := foundSourceEntry{
+				ClientID: clientID,
+				Port:     source.Port,
 			}
+			if obfuscated {
+				if client := s.clients[clientID]; client != nil {
+					entry.ObfuscationOptions, entry.UserHash = client.sourceObfuscationMetadata()
+				}
+			}
+			sources = append(sources, entry)
 		}
 	}
 	return sources
@@ -850,6 +889,56 @@ func (c *clientSession) sendLocked(typeName string, packet protocol.Serializable
 	return err
 }
 
+func (c *clientSession) sendFoundSourcesObfuscated(hash protocol.Hash, sources []foundSourceEntry) error {
+	var body bytes.Buffer
+	if err := protocol.WriteHash(&body, hash); err != nil {
+		return err
+	}
+	if err := body.WriteByte(byte(len(sources))); err != nil {
+		return err
+	}
+	for _, source := range sources {
+		if err := protocol.WriteUInt32(&body, uint32(source.ClientID)); err != nil {
+			return err
+		}
+		if err := protocol.WriteUInt16(&body, uint16(source.Port)); err != nil {
+			return err
+		}
+		if err := body.WriteByte(source.ObfuscationOptions); err != nil {
+			return err
+		}
+		if source.UserHash != nil {
+			if _, err := body.Write(source.UserHash.Bytes()); err != nil {
+				return err
+			}
+		}
+	}
+	return c.sendRawLocked(opFoundSourcesObfu, body.Bytes())
+}
+
+func (c *clientSession) sendRawLocked(opcode byte, body []byte) error {
+	var frame bytes.Buffer
+	header := protocol.PacketHeader{
+		Protocol: protocol.EdonkeyHeader,
+		Size:     int32(len(body) + 1),
+		Packet:   opcode,
+	}
+	if err := header.Put(&frame); err != nil {
+		return err
+	}
+	if _, err := frame.Write(body); err != nil {
+		return err
+	}
+	raw := frame.Bytes()
+	c.noteOutbound(len(raw))
+	c.server.bumpCounter(func(stats *serverCounters) {
+		stats.OutboundPackets++
+		stats.OutboundBytes += int64(len(raw))
+	})
+	_, err := c.conn.Write(raw)
+	return err
+}
+
 func (c *clientSession) noteInbound(frameBytes int) {
 	c.mu.Lock()
 	c.lastSeenAt = time.Now()
@@ -943,6 +1032,38 @@ func extractClientName(tags protocol.TagList) string {
 		}
 	}
 	return ""
+}
+
+func extractClientConnectOptions(tags protocol.TagList) byte {
+	for _, tag := range tags {
+		if tag.ID != 0x20 {
+			continue
+		}
+		var options byte
+		if tag.UInt32&serverCapabilitySupportCrypt != 0 {
+			options |= 0x01
+		}
+		if tag.UInt32&serverCapabilityRequestCrypt != 0 {
+			options |= 0x02
+		}
+		if tag.UInt32&serverCapabilityRequireCrypt != 0 {
+			options |= 0x04
+		}
+		return options
+	}
+	return 0
+}
+
+func (c *clientSession) sourceObfuscationMetadata() (byte, *protocol.Hash) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	options := c.connectOptions
+	if c.clientHash.IsZero() {
+		return options, nil
+	}
+	options |= sourceObfuscationUserHashPresent
+	hash := c.clientHash
+	return options, &hash
 }
 
 func clientIDFromRemote(addr *net.TCPAddr) int32 {
