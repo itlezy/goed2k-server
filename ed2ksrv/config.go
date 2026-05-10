@@ -11,7 +11,7 @@ import (
 const (
 	defaultListenAddress      = ":4661"
 	defaultAdminListenAddress = ":8080"
-	defaultServerName         = "goed2k-server"
+	defaultServerName         = "overlord-ed2k-server"
 	defaultDescription        = "Minimal eD2k/eMule compatible server"
 	defaultBatchSize          = 200
 	defaultCatalogPath        = "catalog.json"
@@ -50,7 +50,7 @@ func DefaultConfig() Config {
 		AdminListenAddress:  defaultAdminListenAddress,
 		ServerName:          defaultServerName,
 		ServerDescription:   defaultDescription,
-		Message:             "Welcome to goed2k-server",
+		Message:             "Welcome to overlord-ed2k-server",
 		StorageBackend:      storageBackendJSON,
 		CatalogPath:         defaultCatalogPath,
 		DatabaseTable:       defaultDatabaseTable,

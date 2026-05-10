@@ -1,4 +1,4 @@
-module github.com/chenjia404/goed2k-server
+module github.com/p2p-overlord/p2p-overlord-ed2k-server
 
 go 1.25.7
 

@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/chenjia404/goed2k-server/ed2ksrv"
+	"github.com/p2p-overlord/p2p-overlord-ed2k-server/ed2ksrv"
 )
 
 func main() {

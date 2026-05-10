@@ -1,8 +1,8 @@
-# goed2k-server
+# overlord-ed2k-server
 
 [简体中文](README-CN.md)
 
-`github.com/chenjia404/goed2k-server` is an ED2K/eMule server implemented in Go, compatible with the `github.com/monkeyWie/goed2k` client protocol.
+`github.com/p2p-overlord/p2p-overlord-ed2k-server` is an ED2K/eMule server implemented in Go, compatible with the `github.com/monkeyWie/goed2k` client protocol.
 
 The current release focuses on two areas:
 
@@ -41,7 +41,7 @@ The goal is not to replicate the full official eMule server, but to provide a ru
 
 ## Project layout
 
-- [cmd/goed2k-server/main.go](cmd/goed2k-server/main.go): entry point
+- [cmd/overlord-ed2k-server/main.go](cmd/overlord-ed2k-server/main.go): entry point
 - [ed2ksrv/server.go](ed2ksrv/server.go): TCP server, dynamic user table, stats
 - [ed2ksrv/server_udp.go](ed2ksrv/server_udp.go): ED2K UDP server status replies
 - [ed2ksrv/admin.go](ed2ksrv/admin.go): HTTP admin API
@@ -59,13 +59,13 @@ The goal is not to replicate the full official eMule server, but to provide a ru
 If the module is published on GitHub, install by module path:
 
 ```bash
-go install github.com/chenjia404/goed2k-server/cmd/goed2k-server@latest
+go install github.com/p2p-overlord/p2p-overlord-ed2k-server/cmd/overlord-ed2k-server@latest
 ```
 
 Then run:
 
 ```bash
-goed2k-server -config config.json
+overlord-ed2k-server -config config.json
 ```
 
 ### Import as a Go module
@@ -73,13 +73,13 @@ goed2k-server -config config.json
 To use the server package in your own project:
 
 ```bash
-go get github.com/chenjia404/goed2k-server@latest
+go get github.com/p2p-overlord/p2p-overlord-ed2k-server@latest
 ```
 
 Import:
 
 ```go
-import "github.com/chenjia404/goed2k-server/ed2ksrv"
+import "github.com/p2p-overlord/p2p-overlord-ed2k-server/ed2ksrv"
 ```
 
 ### goed2k dependency version
@@ -144,9 +144,9 @@ Example contents:
   "listen_address": ":4661",
   "admin_listen_address": ":8080",
   "admin_token": "change-me",
-  "server_name": "goed2k-server",
+  "server_name": "overlord-ed2k-server",
   "server_description": "Minimal eD2k/eMule compatible server",
-  "message": "Welcome to goed2k-server",
+  "message": "Welcome to overlord-ed2k-server",
   "storage_backend": "json",
   "catalog_path": "testdata/catalog.json",
   "database_dsn": "",
@@ -170,13 +170,13 @@ See the **Configuration** table below and [`config.example.json`](config.example
 From module source:
 
 ```bash
-go run github.com/chenjia404/goed2k-server/cmd/goed2k-server -config config.json
+go run github.com/p2p-overlord/p2p-overlord-ed2k-server/cmd/overlord-ed2k-server -config config.json
 ```
 
 Or from a local clone:
 
 ```bash
-go run ./cmd/goed2k-server -config config.json
+go run ./cmd/overlord-ed2k-server -config config.json
 ```
 
 Default listeners:
@@ -195,33 +195,33 @@ eMule sends a global server status request over **UDP** (`OP_GLOBSERVSTATREQ`). 
 
 ## Docker
 
-The image published for production is [`chenjia404/goed2k-server`](https://hub.docker.com/r/chenjia404/goed2k-server) on Docker Hub.
+Build the local container image from this repository when containerized execution is needed.
 
 Pull:
 
 ```bash
-docker pull chenjia404/goed2k-server:latest
+docker build -t p2p-overlord-ed2k-server:local .
 ```
 
-The container entrypoint runs `/app/goed2k-server` with default arguments `-config /app/config.json` (see the [`Dockerfile`](Dockerfile) in this repo). Map host ports and mount your `config.json` at `/app/config.json`:
+The container entrypoint runs `/app/overlord-ed2k-server` with default arguments `-config /app/config.json` (see the [`Dockerfile`](Dockerfile) in this repo). Map host ports and mount your `config.json` at `/app/config.json`:
 
 ```bash
-docker run -d --name goed2k-server \
+docker run -d --name overlord-ed2k-server \
   -p 4661:4661 -p 4665:4665/udp -p 8080:8080 \
   -v /path/to/config.json:/app/config.json:ro \
-  chenjia404/goed2k-server:latest
+  p2p-overlord-ed2k-server:local
 ```
 
 `4665:4665/udp` matches default TCP `4661` with `udp_port_offset` `4`. If you change the TCP port in `listen_address`, map **`TCP port + udp_port_offset`** for UDP.
 
-When `storage_backend` is `json`, ensure `catalog_path` refers to a file that exists inside the container—usually by mounting your catalog and pointing `catalog_path` at that path. Example: host files under `/srv/goed2k/`, with `catalog_path` set to `/data/catalog.json`:
+When `storage_backend` is `json`, ensure `catalog_path` refers to a file that exists inside the container—usually by mounting your catalog and pointing `catalog_path` at that path. Example: host files under `/srv/p2p-overlord-ed2k-server/`, with `catalog_path` set to `/data/catalog.json`:
 
 ```bash
-docker run -d --name goed2k-server \
+docker run -d --name overlord-ed2k-server \
   -p 4661:4661 -p 4665:4665/udp -p 8080:8080 \
-  -v /srv/goed2k/config.json:/app/config.json:ro \
-  -v /srv/goed2k/catalog.json:/data/catalog.json:ro \
-  chenjia404/goed2k-server:latest
+  -v /srv/p2p-overlord-ed2k-server/config.json:/app/config.json:ro \
+  -v /srv/p2p-overlord-ed2k-server/catalog.json:/data/catalog.json:ro \
+  p2p-overlord-ed2k-server:local
 ```
 
 To use another config path, pass arguments after the image name (overriding the default `-config /app/config.json`):
@@ -229,7 +229,7 @@ To use another config path, pass arguments after the image name (overriding the 
 ```bash
 docker run --rm -p 4661:4661 -p 4665:4665/udp -p 8080:8080 \
   -v /path/to/other.json:/other/config.json:ro \
-  chenjia404/goed2k-server:latest -config /other/config.json
+  p2p-overlord-ed2k-server:local -config /other/config.json
 ```
 
 To build and run from source instead of the Hub image, use the `Dockerfile` at the repository root.
@@ -265,7 +265,7 @@ MySQL:
 ```json
 {
   "storage_backend": "mysql",
-  "database_dsn": "user:password@tcp(127.0.0.1:3306)/goed2k?charset=utf8mb4&parseTime=true",
+  "database_dsn": "user:password@tcp(127.0.0.1:3306)/p2p_overlord_ed2k?charset=utf8mb4&parseTime=true",
   "database_table": "shared_files"
 }
 ```
@@ -275,7 +275,7 @@ PostgreSQL:
 ```json
 {
   "storage_backend": "pgsql",
-  "database_dsn": "postgres://user:password@127.0.0.1:5432/goed2k?sslmode=disable",
+  "database_dsn": "postgres://user:password@127.0.0.1:5432/p2p_overlord_ed2k?sslmode=disable",
   "database_table": "shared_files"
 }
 ```

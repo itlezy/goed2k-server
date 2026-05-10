@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/goed2k-server ./cmd/goed2k-server
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/overlord-ed2k-server ./cmd/overlord-ed2k-server
 
 FROM alpine:latest
 
@@ -20,11 +20,11 @@ RUN apk add --no-cache ca-certificates tzdata \
 
 WORKDIR /app
 
-COPY --from=builder /out/goed2k-server /app/goed2k-server
+COPY --from=builder /out/overlord-ed2k-server /app/overlord-ed2k-server
 
 USER 65532:65532
 
 EXPOSE 4661/tcp 4665/udp 8080/tcp
 
-ENTRYPOINT ["/app/goed2k-server"]
+ENTRYPOINT ["/app/overlord-ed2k-server"]
 CMD ["-config", "/app/config.json"]

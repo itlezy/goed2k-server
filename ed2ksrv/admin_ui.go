@@ -1,9 +1,9 @@
 package ed2ksrv
 
 import (
+	"embed"
 	"encoding/base64"
 	"encoding/json"
-	"embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -133,7 +133,8 @@ const adminUIScript = `(() => {
     selectedFiles: new Set()
   };
 
-  let adminToken = tokenEnabled ? (window.localStorage.getItem('goed2k_admin_token') || '') : '';
+  const adminTokenKey = 'p2p_overlord_ed2k_admin_token';
+  let adminToken = tokenEnabled ? (window.localStorage.getItem(adminTokenKey) || '') : '';
 
   function setToast(message, isError) {
     toast.textContent = message;
@@ -400,7 +401,7 @@ const adminUIScript = `(() => {
   loginForm.addEventListener('submit', async function (event) {
     event.preventDefault();
     adminToken = tokenInput.value.trim();
-    window.localStorage.setItem('goed2k_admin_token', adminToken);
+    window.localStorage.setItem(adminTokenKey, adminToken);
     await refreshAll();
   });
 
@@ -430,7 +431,7 @@ const adminUIScript = `(() => {
   refreshButton.addEventListener('click', refreshAll);
   logoutButton.addEventListener('click', function () {
     adminToken = '';
-    window.localStorage.removeItem('goed2k_admin_token');
+    window.localStorage.removeItem(adminTokenKey);
     tokenInput.value = '';
     setAuthState(false);
     setToast(i18n.toastLoggedOut);

@@ -1,6 +1,6 @@
-# goed2k-server
+# overlord-ed2k-server
 
-`github.com/chenjia404/goed2k-server` 是一个用 Go 实现的 ED2K/eMule Server，面向 `github.com/monkeyWie/goed2k` 客户端协议做兼容实现。
+`github.com/p2p-overlord/p2p-overlord-ed2k-server` 是一个用 Go 实现的 ED2K/eMule Server，面向 `github.com/monkeyWie/goed2k` 客户端协议做兼容实现。
 
 当前版本重点提供两部分能力：
 
@@ -39,16 +39,16 @@
 
 ## 项目结构
 
-- [cmd/goed2k-server/main.go](goed2k-server/cmd/goed2k-server/main.go): 启动入口
-- [ed2ksrv/server.go](goed2k-server/ed2ksrv/server.go): TCP 服务、动态用户表、统计
-- [ed2ksrv/server_udp.go](goed2k-server/ed2ksrv/server_udp.go): ED2K UDP 服务状态应答
-- [ed2ksrv/admin.go](goed2k-server/ed2ksrv/admin.go): HTTP 管理接口
-- [ed2ksrv/catalog.go](goed2k-server/ed2ksrv/catalog.go): 共享文件目录和持久化
-- [ed2ksrv/offerfiles.go](goed2k-server/ed2ksrv/offerfiles.go): `OP_OFFERFILES` 协议处理
-- [ed2ksrv/protocol.go](goed2k-server/ed2ksrv/protocol.go): 搜索请求解析
-- [ed2ksrv/config.go](goed2k-server/ed2ksrv/config.go): 配置结构
-- [config.example.json](goed2k-server/config.example.json): 示例配置
-- [testdata/catalog.json](goed2k-server/testdata/catalog.json): 示例共享目录
+- [cmd/overlord-ed2k-server/main.go](cmd/overlord-ed2k-server/main.go): 启动入口
+- [ed2ksrv/server.go](ed2ksrv/server.go): TCP 服务、动态用户表、统计
+- [ed2ksrv/server_udp.go](ed2ksrv/server_udp.go): ED2K UDP 服务状态应答
+- [ed2ksrv/admin.go](ed2ksrv/admin.go): HTTP 管理接口
+- [ed2ksrv/catalog.go](ed2ksrv/catalog.go): 共享文件目录和持久化
+- [ed2ksrv/offerfiles.go](ed2ksrv/offerfiles.go): `OP_OFFERFILES` 协议处理
+- [ed2ksrv/protocol.go](ed2ksrv/protocol.go): 搜索请求解析
+- [ed2ksrv/config.go](ed2ksrv/config.go): 配置结构
+- [config.example.json](config.example.json): 示例配置
+- [testdata/catalog.json](testdata/catalog.json): 示例共享目录
 
 ## 安装与引用
 
@@ -57,13 +57,13 @@
 如果你的仓库已经发布到 GitHub，可以直接按模块路径安装：
 
 ```bash
-go install github.com/chenjia404/goed2k-server/cmd/goed2k-server@latest
+go install github.com/p2p-overlord/p2p-overlord-ed2k-server/cmd/overlord-ed2k-server@latest
 ```
 
 安装后可直接运行：
 
 ```bash
-goed2k-server -config config.json
+overlord-ed2k-server -config config.json
 ```
 
 ### 作为 Go 模块引用
@@ -71,13 +71,13 @@ goed2k-server -config config.json
 如果你要在自己的项目里引用服务端库包：
 
 ```bash
-go get github.com/chenjia404/goed2k-server@latest
+go get github.com/p2p-overlord/p2p-overlord-ed2k-server@latest
 ```
 
 导入方式：
 
 ```go
-import "github.com/chenjia404/goed2k-server/ed2ksrv"
+import "github.com/p2p-overlord/p2p-overlord-ed2k-server/ed2ksrv"
 ```
 
 ### goed2k 依赖版本管理
@@ -142,9 +142,9 @@ cp config.example.json config.json
   "listen_address": ":4661",
   "admin_listen_address": ":8080",
   "admin_token": "change-me",
-  "server_name": "goed2k-server",
+  "server_name": "overlord-ed2k-server",
   "server_description": "Minimal eD2k/eMule compatible server",
-  "message": "Welcome to goed2k-server",
+  "message": "Welcome to overlord-ed2k-server",
   "storage_backend": "json",
   "catalog_path": "testdata/catalog.json",
   "database_dsn": "",
@@ -168,13 +168,13 @@ cp config.example.json config.json
 使用源码启动：
 
 ```bash
-go run github.com/chenjia404/goed2k-server/cmd/goed2k-server -config config.json
+go run github.com/p2p-overlord/p2p-overlord-ed2k-server/cmd/overlord-ed2k-server -config config.json
 ```
 
 如果你在仓库目录里，也可以：
 
 ```bash
-go run ./cmd/goed2k-server -config config.json
+go run ./cmd/overlord-ed2k-server -config config.json
 ```
 
 启动后默认监听：
@@ -193,33 +193,33 @@ eMule 会向服务器的 **UDP** 端口发送全局服务状态请求（`OP_GLOB
 
 ## Docker 运行
 
-线上使用的 Docker 镜像为 Docker Hub 上的 [`chenjia404/goed2k-server`](https://hub.docker.com/r/chenjia404/goed2k-server)。
+需要容器化运行时，从本仓库构建本地镜像。
 
 拉取镜像：
 
 ```bash
-docker pull chenjia404/goed2k-server:latest
+docker build -t p2p-overlord-ed2k-server:local .
 ```
 
-容器默认执行 `/app/goed2k-server`，参数为 `-config /app/config.json`（与本仓库根目录 [`Dockerfile`](Dockerfile) 一致）。将主机上的 `config.json` 挂载到 `/app/config.json`，并映射端口即可运行：
+容器默认执行 `/app/overlord-ed2k-server`，参数为 `-config /app/config.json`（与本仓库根目录 [`Dockerfile`](Dockerfile) 一致）。将主机上的 `config.json` 挂载到 `/app/config.json`，并映射端口即可运行：
 
 ```bash
-docker run -d --name goed2k-server \
+docker run -d --name overlord-ed2k-server \
   -p 4661:4661 -p 4665:4665/udp -p 8080:8080 \
   -v /path/to/config.json:/app/config.json:ro \
-  chenjia404/goed2k-server:latest
+  p2p-overlord-ed2k-server:local
 ```
 
 其中 `4665:4665/udp` 对应默认 TCP `4661` 且 `udp_port_offset` 为 `4` 时的 UDP 端口；若你修改了 `listen_address` 的 TCP 端口，请按 **`TCP 端口 + udp_port_offset`** 调整 UDP 映射。
 
-当 `storage_backend` 为 `json` 时，`catalog_path` 必须指向容器内真实存在的文件，一般通过挂载静态目录或单个 catalog 文件实现，并让配置里的路径与挂载路径一致。示例：主机目录 `/srv/goed2k/`，配置中 `catalog_path` 设为 `/data/catalog.json`：
+当 `storage_backend` 为 `json` 时，`catalog_path` 必须指向容器内真实存在的文件，一般通过挂载静态目录或单个 catalog 文件实现，并让配置里的路径与挂载路径一致。示例：主机目录 `/srv/p2p-overlord-ed2k-server/`，配置中 `catalog_path` 设为 `/data/catalog.json`：
 
 ```bash
-docker run -d --name goed2k-server \
+docker run -d --name overlord-ed2k-server \
   -p 4661:4661 -p 4665:4665/udp -p 8080:8080 \
-  -v /srv/goed2k/config.json:/app/config.json:ro \
-  -v /srv/goed2k/catalog.json:/data/catalog.json:ro \
-  chenjia404/goed2k-server:latest
+  -v /srv/p2p-overlord-ed2k-server/config.json:/app/config.json:ro \
+  -v /srv/p2p-overlord-ed2k-server/catalog.json:/data/catalog.json:ro \
+  p2p-overlord-ed2k-server:local
 ```
 
 如需使用其他配置文件路径，可在镜像名之后追加参数（会覆盖默认的 `-config /app/config.json`）：
@@ -227,7 +227,7 @@ docker run -d --name goed2k-server \
 ```bash
 docker run --rm -p 4661:4661 -p 4665:4665/udp -p 8080:8080 \
   -v /path/to/other.json:/other/config.json:ro \
-  chenjia404/goed2k-server:latest -config /other/config.json
+  p2p-overlord-ed2k-server:local -config /other/config.json
 ```
 
 也可从源码自行构建镜像，见仓库根目录的 `Dockerfile`。
@@ -263,7 +263,7 @@ MySQL:
 ```json
 {
   "storage_backend": "mysql",
-  "database_dsn": "user:password@tcp(127.0.0.1:3306)/goed2k?charset=utf8mb4&parseTime=true",
+  "database_dsn": "user:password@tcp(127.0.0.1:3306)/p2p_overlord_ed2k?charset=utf8mb4&parseTime=true",
   "database_table": "shared_files"
 }
 ```
@@ -273,7 +273,7 @@ PostgreSQL:
 ```json
 {
   "storage_backend": "pgsql",
-  "database_dsn": "postgres://user:password@127.0.0.1:5432/goed2k?sslmode=disable",
+  "database_dsn": "postgres://user:password@127.0.0.1:5432/p2p_overlord_ed2k?sslmode=disable",
   "database_table": "shared_files"
 }
 ```
