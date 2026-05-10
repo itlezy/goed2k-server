@@ -4,6 +4,9 @@
   `../p2p-overlord-tooling/docs/WORKSPACE_POLICY.md`.
 - Use `README.md` as the canonical ED2K server docs home.
 - Use `../p2p-overlord-be/BACKLOG.md` as the canonical active backlog.
+- Target full stock eMule `v0.72a` ED2K parity, including deprecated legacy
+  compatibility behavior. The only standing protocol exception is defunct
+  ED2K PeerCache support.
 - This repo is the active local ED2K server used by Overlord parity scenarios.
 - Keep the checkout at `%OVERLORD_PROJECT_DIR%\p2p-overlord-ed2k-server`;
   do not add a separate ED2K server path environment variable.
